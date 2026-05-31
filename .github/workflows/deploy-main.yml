@@ -1,4 +1,4 @@
-name: Deploy to DEV (main)
+name: Deploy to Dev
 on:
   push:
     branches:
@@ -9,7 +9,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy to Dev
+
+      - name: Fix directory permissions
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.SSH_USER_NAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            sudo chown -R ec2-user:ec2-user /usr/share/nginx/html
+            sudo chmod -R 755 /usr/share/nginx/html
+            rm -rf /usr/share/nginx/html/*
+
+      - name: Deploy to Dev Server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -19,4 +32,16 @@ jobs:
           source: html/*
           target: /usr/share/nginx/html
           strip_components: 1
+          overwrite: true
+
+      - name: Restore permissions
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.SSH_USER_NAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            sudo chown -R root:root /usr/share/nginx/html
+            sudo chmod -R 755 /usr/share/nginx/html
           overwrite: true
