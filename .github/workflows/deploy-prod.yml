@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy files
+      - name: Upload files
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.PROD_HOST }}
@@ -21,3 +21,14 @@ jobs:
           target: /home/ec2-user/html
           strip_components: 1
           overwrite: true
+
+      - name: Copy to nginx root
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.SSH_USER_NAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            sudo rm -rf /usr/share/nginx/html/*
+            sudo cp -r /home/ec2-user/html/* /usr/share/nginx/html/
